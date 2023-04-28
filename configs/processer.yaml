@@ -1,0 +1,5 @@
+# Set the directory to extract files from
+source_dir: D:/Datasets/2023_hst_lensed_quasars/downloads
+
+# Set the directory to extract files to
+target_dir: D:/Datasets/2023_hst_lensed_quasars/processed_data
