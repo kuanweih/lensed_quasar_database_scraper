@@ -1,6 +1,11 @@
 # lensed_quasar_database_scraper
 
-To scrape images, run
+To scrape and download the images, run
 ```
-python  data_scraper.py  -c configs/scraper.yaml
+python  download.py  -c configs/download.yaml
+```
+
+To process the images, run
+```
+python  process.py  -c configs/process.yaml
 ```
