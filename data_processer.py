@@ -4,8 +4,10 @@ import gzip
 import yaml
 import shutil
 import argparse
+import numpy as np
 
 from tqdm import tqdm
+from astropy.io import fits
 
 
 def process_download_data(source_dir, target_dir):
@@ -36,8 +38,9 @@ def process_download_data(source_dir, target_dir):
                                             os.path.splitext(os.path.basename(file_path))[0])
 
             # Open the output file and write the extracted contents
-            with open(output_file_path, "wb") as f_out:
-                f_out.write(f_in.read())
+            if output_file_path.endswith(".fits"):
+                with open(output_file_path, "wb") as f_out:
+                    f_out.write(f_in.read())
 
     # Copy all the fits files to the target directory
     for file_path in tqdm(glob.glob(os.path.join(source_dir, fits_pattern)),
@@ -53,6 +56,68 @@ def process_download_data(source_dir, target_dir):
     print("Extraction and copy complete!")
 
 
+def save_fits_files_as_np(fits_files_dir, output_dir):
+    """
+    Reads all .fits files in a directory and saves them as .npy files in another directory. Records
+    which files could not be read and which ones were successfully processed, and saves the lists
+    to separate text files.
+
+    :param fits_files_dir: Path to the directory containing .fits files
+    :param output_dir: Path to the directory where output files will be saved
+    """
+    # Create dir/file paths
+    save_directory = os.path.join(output_dir, "npy_files")
+    good_filepath = os.path.join(output_dir, "good_files.txt")
+    error_filepath = os.path.join(output_dir, "error_files.txt")
+
+    # Create the save directory if it doesn't already exist
+    if not os.path.exists(save_directory):
+        os.makedirs(save_directory)
+
+    # Initialize lists to store the filenames of good and error files
+    good_files = []
+    error_files = []
+
+    # Loop over all files in the directory
+    for filename in tqdm(os.listdir(fits_files_dir), desc="Converting .fits to .npy"):
+        if filename.endswith(".fits"):
+            try:
+                # Read the .fits file as a numpy array
+                filepath = os.path.join(fits_files_dir, filename)
+                data = fits.getdata(filepath)
+
+                # Save the numpy array as a .npy file
+                save_filename = os.path.splitext(filename)[0] + ".npy"
+                save_filepath = os.path.join(save_directory, save_filename)
+                np.save(save_filepath, data)
+
+                # Append the filename to the good_files list
+                good_files.append(filename)
+
+            except:
+                # If an error occurs, append the filename to the error_files list
+                error_files.append(filename)
+                continue
+
+    # Save the list of good filenames to a text file
+    if good_files:
+        with open(good_filepath, "w") as f:
+            f.write("\n".join(good_files))
+        print(f"List of good files saved to {good_filepath}")
+    else:
+        print("No files were processed successfully")
+
+    # Save the list of error filenames to a text file
+    if error_files:
+        with open(error_filepath, "w") as f:
+            f.write("\n".join(error_files))
+        print(f"List of error files saved to {error_filepath}")
+    else:
+        print("No errors occurred")
+
+    # Print a message indicating the file converting is complete
+    print("Numpy saving completes!")
+
 
 
 if __name__ == "__main__":
@@ -66,5 +131,13 @@ if __name__ == "__main__":
     with open(args.config_file) as file:
         config = yaml.safe_load(file)
 
+    config["tmp_dir"] = os.path.join(config["output_dir"], "tmp")
+
     # Execute the processer
-    process_download_data(config["source_dir"], config["target_dir"])
+    process_download_data(config["source_dir"], config["tmp_dir"])
+    save_fits_files_as_np(config["tmp_dir"], config["output_dir"])
+
+    # Remove the tmp folder
+    shutil.rmtree(config["tmp_dir"])
+
+    print("Done")
