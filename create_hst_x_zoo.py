@@ -28,10 +28,7 @@ def process_hst_images(config):
         img = np.repeat(img[:, :, np.newaxis], 3, axis=2)  # grayscale -> RGB
         img = Image.fromarray((img * 255).astype(np.uint8))
         img = img.resize((config["image_size"], config["image_size"]))
-        img = normalize_pixels(np.array(img))
-
-        np.save(os.path.join(dir_out, file), img)
-
+        img = img.save(os.path.join(dir_out, file.replace(".npy", ".jpg")))
 
 def process_zoo_images(config):
     """ Process Galaxy Zoo .jpg images.
@@ -46,10 +43,7 @@ def process_zoo_images(config):
     for file in tqdm(files, desc="ZOO"):
         img = Image.open(os.path.join(config["dir_zoo"], file))
         img = img.resize((config["image_size"], config["image_size"]))
-        img = np.array(img)
-        img = normalize_pixels(img)
-
-        np.save(os.path.join(dir_out, file.replace(".jpg", ".npy")), img)
+        img = img.save(os.path.join(dir_out, file))
 
 
 def normalize_pixels(img):
