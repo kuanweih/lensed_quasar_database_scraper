@@ -1,0 +1,6 @@
+dir_zoo: D:\Datasets\galaxy-zoo-the-galaxy-challenge\images_training_rev1\images_training_rev1
+dir_hst: D:\Datasets\2023_hst_lensed_quasars\npy_files
+
+dir_output: D:\Datasets\2023_hst_x_zoo_class
+
+image_size: 224
